@@ -13,20 +13,16 @@
       background: #000;
       overflow: hidden;
       font-family: Arial, Helvetica, sans-serif;
-      -webkit-text-size-adjust: 100%;
     }
 
-    /* Contenitore: full screen */
     .wrap {
       position: fixed;
       inset: 0;
       width: 100vw;
       height: 100vh;
       background: #000;
-      overflow: hidden;
     }
 
-    /* Iframe: full screen (9:16) */
     iframe {
       position: absolute;
       inset: 0;
@@ -34,61 +30,170 @@
       height: 100%;
       border: 0;
       background: #000;
-      display: block;
-      /* migliora touch su iOS */
-      -webkit-overflow-scrolling: touch;
     }
 
-    /* Safe-area iPhone (notch) */
-    .safe {
+    /* TOP BAR */
+    .topbar {
       position: absolute;
-      inset: 0;
-      padding:
-        env(safe-area-inset-top)
-        env(safe-area-inset-right)
-        env(safe-area-inset-bottom)
-        env(safe-area-inset-left);
+      top: env(safe-area-inset-top);
+      left: 0;
+      right: 0;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      z-index: 20;
       pointer-events: none;
     }
 
-    /* Overlay “anti-press” (non blocca il touch dentro l’iframe) */
-    .tap-guard {
-      position:absolute;
-      inset:0;
-      pointer-events:none;
+    .badge, .btn-exit {
+      pointer-events: auto;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      user-select: none;
+    }
+
+    .timer {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.5px;
+    }
+
+    /* OVERLAY FINE SESSIONE */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      z-index: 100;
+      cursor: pointer;
+      padding: 20px;
+    }
+
+    .overlay.active {
+      display: flex;
+    }
+
+    .overlay-content {
+      color: #fff;
+      max-width: 320px;
+    }
+
+    .overlay-content h1 {
+      font-size: 22px;
+      margin-bottom: 14px;
+    }
+
+    .overlay-content p {
+      font-size: 15px;
+      opacity: 0.85;
+      margin-bottom: 20px;
+    }
+
+    .overlay-content .reload {
+      display: inline-block;
+      padding: 12px 18px;
+      border-radius: 16px;
+      background: #ffffff;
+      color: #000;
+      font-size: 14px;
+      font-weight: bold;
     }
   </style>
 </head>
 
 <body>
   <div class="wrap">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="badge">
+        Sessione <strong class="timer" id="timer">05:00</strong>
+      </div>
+      <button class="btn-exit" id="exitBtn">Esci</button>
+    </div>
+
+    <!-- IFRAME AI -->
     <iframe
       src="https://lia.gamaleau.it/?knowledgeid=98748408-6c75-4b05-94d2-3a8c4b8c91e9&avatarid=69cf601f-b35b-4d1b-a701-c854d223b5a5&lang=it"
-      allow="microphone; camera; autoplay; clipboard-read; clipboard-write; fullscreen"
+      allow="microphone; camera; autoplay; fullscreen"
       allowfullscreen
       referrerpolicy="no-referrer"
       title="Avatar AI"
     ></iframe>
 
-    <div class="safe"></div>
-    <div class="tap-guard"></div>
+    <!-- OVERLAY FINE SESSIONE -->
+    <div class="overlay" id="endOverlay">
+      <div class="overlay-content">
+        <h1>Sessione scaduta</h1>
+        <p>Il tempo a disposizione è terminato.</p>
+        <div class="reload">Tocca per ricaricare</div>
+      </div>
+    </div>
+
   </div>
 
   <script>
-    // Blocca menu contestuale / selezione (utile per kiosk)
-    document.addEventListener("contextmenu", e => e.preventDefault(), { passive: false });
-    document.addEventListener("selectstart", e => e.preventDefault(), { passive: false });
+    // --- CONFIG ---
+    const SESSION_SECONDS = 5 * 60;
 
-    // Prova ad andare in fullscreen su Android/Chrome (su iOS è limitato dal browser)
-    async function tryFullscreen() {
-      const el = document.documentElement;
-      if (!document.fullscreenElement && el.requestFullscreen) {
-        try { await el.requestFullscreen(); } catch (_) {}
-      }
+    const timerEl = document.getElementById("timer");
+    const exitBtn = document.getElementById("exitBtn");
+    const overlay = document.getElementById("endOverlay");
+
+    let remaining = SESSION_SECONDS;
+    let interval = null;
+
+    function format(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
     }
-    // opzionale: attiva fullscreen al primo tap
-    window.addEventListener("touchend", tryFullscreen, { once: true, passive: true });
-    window.addEventListener("click", tryFullscreen, { once: true, passive: true });
+
+    function showOverlay() {
+      overlay.classList.add("active");
+    }
+
+    function reloadPage() {
+      const url = new URL(window.location.href);
+      url.searchParams.set("_r", Date.now());
+      window.location.replace(url.toString());
+    }
+
+    function startTimer() {
+      timerEl.textContent = format(remaining);
+      interval = setInterval(() => {
+        remaining--;
+        timerEl.textContent = format(remaining);
+        if (remaining <= 0) {
+          clearInterval(interval);
+          showOverlay();
+        }
+      }, 1000);
+    }
+
+    // EXIT MANUALE
+    exitBtn.addEventListener("click", () => {
+      clearInterval(interval);
+      showOverlay();
+    });
+
+    // TAP SU OVERLAY → RELOAD
+    overlay.addEventListener("click", reloadPage);
+
+    // Blocchi kiosk
+    document.addEventListener("contextmenu", e => e.preventDefault());
+    document.addEventListener("selectstart", e => e.preventDefault());
+
+    // Avvio
+    startTimer();
   </script>
 </body>
 </html>
