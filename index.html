@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>AI</title>
+
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    /* Contenitore: full screen */
+    .wrap {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      overflow: hidden;
+    }
+
+    /* Iframe: full screen (9:16) */
+    iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+      display: block;
+      /* migliora touch su iOS */
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Safe-area iPhone (notch) */
+    .safe {
+      position: absolute;
+      inset: 0;
+      padding:
+        env(safe-area-inset-top)
+        env(safe-area-inset-right)
+        env(safe-area-inset-bottom)
+        env(safe-area-inset-left);
+      pointer-events: none;
+    }
+
+    /* Overlay “anti-press” (non blocca il touch dentro l’iframe) */
+    .tap-guard {
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <iframe
+      src="https://lia.gamaleau.it/?knowledgeid=98748408-6c75-4b05-94d2-3a8c4b8c91e9&avatarid=69cf601f-b35b-4d1b-a701-c854d223b5a5&lang=it"
+      allow="microphone; camera; autoplay; clipboard-read; clipboard-write; fullscreen"
+      allowfullscreen
+      referrerpolicy="no-referrer"
+      title="Avatar AI"
+    ></iframe>
+
+    <div class="safe"></div>
+    <div class="tap-guard"></div>
+  </div>
+
+  <script>
+    // Blocca menu contestuale / selezione (utile per kiosk)
+    document.addEventListener("contextmenu", e => e.preventDefault(), { passive: false });
+    document.addEventListener("selectstart", e => e.preventDefault(), { passive: false });
+
+    // Prova ad andare in fullscreen su Android/Chrome (su iOS è limitato dal browser)
+    async function tryFullscreen() {
+      const el = document.documentElement;
+      if (!document.fullscreenElement && el.requestFullscreen) {
+        try { await el.requestFullscreen(); } catch (_) {}
+      }
+    }
+    // opzionale: attiva fullscreen al primo tap
+    window.addEventListener("touchend", tryFullscreen, { once: true, passive: true });
+    window.addEventListener("click", tryFullscreen, { once: true, passive: true });
+  </script>
+</body>
+</html>
