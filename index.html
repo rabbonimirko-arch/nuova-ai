@@ -8,22 +8,20 @@
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body {
-      width: 100%;
-      height: 100%;
-      background: #000;
-      overflow: hidden;
+      width:100%;
+      height:100%;
+      background:#000;
+      overflow:hidden;
       font-family: Arial, Helvetica, sans-serif;
     }
 
-    /* usa dvh per i browser mobile moderni (evita “schermo vuoto” con barre) */
     .wrap{
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
+      position:fixed;
+      inset:0;
+      width:100vw;
+      height:100vh;
+      height:100dvh;
       background:#000;
-      overflow:hidden;
     }
 
     iframe{
@@ -36,132 +34,137 @@
       display:block;
     }
 
-    /* barra in alto */
+    /* TOP BAR */
     .topbar{
       position:absolute;
-      left:0; right:0;
       top: env(safe-area-inset-top);
-      padding: 10px 12px;
+      left:0;
+      right:0;
+      padding:10px 12px;
       display:flex;
-      align-items:center;
       justify-content:space-between;
-      gap:10px;
-      z-index: 50;
+      align-items:center;
+      z-index:50;
       pointer-events:none;
     }
+
     .pill, .btn{
       pointer-events:auto;
+      background:rgba(0,0,0,0.65);
       color:#fff;
-      background: rgba(0,0,0,0.65);
-      border:1px solid rgba(255,255,255,0.22);
-      border-radius: 14px;
-      padding: 10px 14px;
-      font-size: 13px;
-      user-select:none;
+      border:1px solid rgba(255,255,255,0.25);
+      border-radius:14px;
+      padding:10px 14px;
+      font-size:13px;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
+      user-select:none;
     }
-    .btn{ cursor:pointer; }
-    .btn:active{ transform: scale(0.98); }
-    .timer{ font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
 
-    /* OVERLAY: VISIBILE DI DEFAULT (così non avrai mai “schermo vuoto”) */
+    .btn{
+      cursor:pointer;
+    }
+
+    .btn:active{
+      transform:scale(0.97);
+    }
+
+    .timer{
+      font-variant-numeric: tabular-nums;
+      letter-spacing:0.5px;
+    }
+
+    /* OVERLAY FINE SESSIONE */
     .overlay{
-      position: fixed;
-      inset: 0;
+      position:fixed;
+      inset:0;
       width:100vw;
       height:100vh;
       height:100dvh;
-      background: rgba(0,0,0,0.92);
-      display: flex;              /* <— di default è ON */
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      z-index: 999;
-      padding: 22px;
+      background:rgba(0,0,0,0.92);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      z-index:999;
+      padding:24px;
     }
-    .overlay.hidden{ display:none; } /* quando la sessione parte, lo nascondiamo */
+
+    .overlay.active{
+      display:flex;
+    }
 
     .card{
-      width: 100%;
-      max-width: 360px;
+      max-width:360px;
       color:#fff;
     }
+
     .card h1{
-      font-size: 22px;
-      margin-bottom: 10px;
+      font-size:22px;
+      margin-bottom:12px;
     }
+
     .card p{
-      font-size: 15px;
-      opacity: 0.88;
-      line-height: 1.35;
-      margin-bottom: 18px;
+      font-size:15px;
+      opacity:0.85;
+      line-height:1.35;
+      margin-bottom:20px;
     }
+
     .cta{
       display:inline-block;
-      padding: 12px 18px;
-      border-radius: 16px;
+      padding:12px 20px;
+      border-radius:16px;
       background:#fff;
       color:#000;
       font-size:14px;
       font-weight:700;
     }
-
-    .topbar.hidden{ display:none; }
   </style>
 </head>
 
 <body>
   <div class="wrap">
 
-    <div class="topbar hidden" id="topbar">
-      <div class="pill">Sessione <strong class="timer" id="timer">05:00</strong></div>
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="pill">
+        Sessione <strong class="timer" id="timer">05:00</strong>
+      </div>
       <button class="btn" id="exitBtn" type="button">Esci</button>
     </div>
 
-    <iframe id="aiFrame" title="Avatar AI"
+    <!-- IFRAME AI -->
+    <iframe
+      id="aiFrame"
+      src="https://lia.gamaleau.it/?knowledgeid=98748408-6c75-4b05-94d2-3a8c4b8c91e9&avatarid=69cf601f-b35b-4d1b-a701-c854d223b5a5&lang=it"
       allow="microphone; camera; autoplay; fullscreen"
       allowfullscreen
       referrerpolicy="no-referrer"
-      src="about:blank"></iframe>
+      title="Avatar AI">
+    </iframe>
 
+    <!-- OVERLAY -->
     <div class="overlay" id="overlay">
       <div class="card">
-        <h1 id="ovTitle">Scansiona la NFC</h1>
-        <p id="ovText">Per iniziare, avvicina il telefono alla tua NFC card.</p>
-        <div class="cta" id="ovCta">OK</div>
+        <h1>Sessione scaduta</h1>
+        <p>Il tempo a disposizione è terminato.</p>
+        <div class="cta">Tocca per ricaricare</div>
       </div>
     </div>
 
   </div>
 
   <script>
-    // --- CONFIG ---
     const SESSION_SECONDS = 5 * 60;
 
-    const AI_URL =
-      "https://lia.gamaleau.it/?knowledgeid=98748408-6c75-4b05-94d2-3a8c4b8c91e9&avatarid=69cf601f-b35b-4d1b-a701-c854d223b5a5&lang=it";
-
-    const frame   = document.getElementById("aiFrame");
-    const topbar  = document.getElementById("topbar");
     const timerEl = document.getElementById("timer");
     const exitBtn = document.getElementById("exitBtn");
-
     const overlay = document.getElementById("overlay");
-    const ovTitle = document.getElementById("ovTitle");
-    const ovText  = document.getElementById("ovText");
-    const ovCta   = document.getElementById("ovCta");
+    const frame   = document.getElementById("aiFrame");
 
     let remaining = SESSION_SECONDS;
-    let interval = null;
-
-    function getK(){
-      try { return (new URLSearchParams(location.search).get("k") || "").trim(); }
-      catch(e){ return ""; }
-    }
+    let interval  = null;
 
     function format(sec){
       const m = Math.floor(sec / 60);
@@ -169,89 +172,42 @@
       return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
     }
 
-    function setOverlay(title, text, cta){
-      ovTitle.textContent = title;
-      ovText.textContent  = text;
-      ovCta.textContent   = cta || "OK";
-      overlay.classList.remove("hidden"); // mostra
-    }
-
-    function hideOverlay(){
-      overlay.classList.add("hidden"); // nasconde
-    }
-
-    function requireRescan(title){
-      if (interval) { clearInterval(interval); interval = null; }
-
-      // stop iframe
+    function endSession(){
+      clearInterval(interval);
       frame.src = "about:blank";
-
-      // rimuovi k dall’URL così NON riparte senza nuova scansione
-      try {
-        const url = new URL(location.href);
-        url.searchParams.delete("k");
-        history.replaceState(null, "", url.toString());
-      } catch(e) {}
-
-      topbar.classList.add("hidden");
-
-      setOverlay(
-        title || "Sessione scaduta",
-        "Per continuare devi scannerizzare di nuovo la NFC card.",
-        "Scansiona la NFC"
-      );
+      overlay.classList.add("active");
     }
 
-    function startSession(){
-      topbar.classList.remove("hidden");
-      hideOverlay();
-
-      frame.src = AI_URL;
-
-      remaining = SESSION_SECONDS;
-      timerEl.textContent = format(remaining);
-
-      interval = setInterval(() => {
-        remaining--;
-        timerEl.textContent = format(Math.max(remaining, 0));
-        if (remaining <= 0){
-          clearInterval(interval);
-          interval = null;
-          requireRescan("Sessione scaduta");
-        }
-      }, 1000);
+    function reloadPage(){
+      const url = new URL(location.href);
+      url.searchParams.set("_r", Date.now());
+      location.replace(url.toString());
     }
 
-    function tryCloseOrRequireRescan(){
-      // tentativo chiusura tab (su mobile spesso NON permesso)
+    interval = setInterval(() => {
+      remaining--;
+      timerEl.textContent = format(Math.max(remaining,0));
+      if (remaining <= 0) endSession();
+    }, 1000);
+
+    exitBtn.addEventListener("click", () => {
+      clearInterval(interval);
+
+      // tentativo chiusura (non garantito su mobile)
       try {
         window.open("", "_self");
         window.close();
-      } catch(e) {}
+      } catch(e){}
 
-      // fallback certo: richiede nuova scansione
-      setTimeout(() => requireRescan("Uscita effettuata"), 120);
-    }
-
-    exitBtn.addEventListener("click", () => {
-      if (interval) { clearInterval(interval); interval = null; }
-      tryCloseOrRequireRescan();
+      // fallback certo
+      setTimeout(endSession, 120);
     });
 
-    // Blocchi “kiosk”
+    overlay.addEventListener("click", reloadPage);
+
+    // blocchi kiosk base
     document.addEventListener("contextmenu", e => e.preventDefault());
     document.addEventListener("selectstart", e => e.preventDefault());
-
-    // AVVIO
-    const k = getK();
-    if (!k){
-      // overlay già visibile di default
-      topbar.classList.add("hidden");
-      frame.src = "about:blank";
-      setOverlay("Scansiona la NFC", "Per iniziare, avvicina il telefono alla tua NFC card.", "OK");
-    } else {
-      startSession();
-    }
   </script>
 </body>
 </html>
