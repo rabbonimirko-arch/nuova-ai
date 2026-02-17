@@ -3,6 +3,10 @@
     {
       "source": "/app",
       "destination": "https://lia.gamaleau.it/?knowledgeid=98748408-6c75-4b05-94d2-3a8c4b8c91e9&avatarid=69cf601f-b35b-4d1b-a701-c854d223b5a5&lang=it"
+    },
+    {
+      "source": "/app/:path*",
+      "destination": "https://lia.gamaleau.it/:path*"
     }
   ]
 }
