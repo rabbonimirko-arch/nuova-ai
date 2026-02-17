@@ -3,62 +3,245 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Avatar AI</title>
+  <meta name="theme-color" content="#000000" />
+  <title>LiveAvatar Fullscreen</title>
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     html, body {
       width: 100%;
       height: 100%;
       background: #000;
       overflow: hidden;
       font-family: Arial, Helvetica, sans-serif;
+      color: #fff;
     }
 
-    /* Contenitore a schermo intero (9:16 su mobile) */
+    /* Layout 9:16 centrato */
     .page {
       width: 100vw;
       height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: grid;
+      place-items: center;
       background: #000;
-      overflow: hidden;
     }
 
-    /* Wrapper con aspect ratio 9:16 e massimo ingrandimento possibile */
-    .frameWrap {
+    .wrap {
       width: 100vw;
       height: 100vh;
       max-width: calc(100vh * (9 / 16));
       max-height: calc(100vw * (16 / 9));
       aspect-ratio: 9 / 16;
-      background: #000;
       position: relative;
       overflow: hidden;
+      background: #000;
     }
 
     iframe {
       width: 100%;
       height: 100%;
       border: 0;
-      display: block;
       background: #000;
+      display: block;
     }
+
+    /* Overlay UI (Start / Loading / Stop) */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      pointer-events: none;
+    }
+
+    .centerPanel {
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      pointer-events: auto;
+    }
+
+    .card {
+      width: min(92%, 420px);
+      background: rgba(0,0,0,0.60);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      padding: 18px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .status {
+      font-size: 14px;
+      opacity: 0.85;
+      margin-bottom: 14px;
+      min-height: 18px;
+    }
+
+    .btnRow {
+      display: grid;
+      gap: 10px;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btnStart {
+      background: #ffffff;
+      color: #000;
+    }
+
+    .btnStop {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    /* Barra bassa tipo “control strip” */
+    .bottomBar {
+      pointer-events: auto;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0));
+    }
+
+    .pill {
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.12);
+      opacity: 0.9;
+    }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 
 <body>
   <div class="page">
-    <div class="frameWrap">
-      <iframe
-        src="https://lia.gamaleau.it/?knowledgeid=98748408-6c75-4b05-94d2-3a8c4b8c91e9&avatarid=69cf601f-b35b-4d1b-a701-c854d223b5a5&lang=it"
+    <div class="wrap">
+      <!-- Iframe: viene caricato solo dopo click su Start (utile per permessi mic su mobile) -->
+      <iframe id="avatarFrame" class="hidden"
         allow="microphone; camera; autoplay; clipboard-read; clipboard-write; fullscreen"
         referrerpolicy="no-referrer"
-        title="Avatar AI">
+        title="LiveAvatar">
       </iframe>
+
+      <div class="overlay" id="ui">
+        <div class="centerPanel">
+          <div class="card">
+            <div class="title" id="uiTitle">Start</div>
+            <div class="status" id="uiStatus">Tocca Start per avviare l’avatar.</div>
+
+            <div class="btnRow">
+              <button class="btnStart" id="btnStart">Start</button>
+              <button class="btnStop hidden" id="btnStop">Stop chat</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottomBar">
+          <div class="pill" id="pillInfo">9:16 Fullscreen</div>
+          <div class="pill" id="pillLang">lang=it</div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <script>
+    // Link base (quello che mi hai dato)
+    const BASE_URL = "https://lia.gamaleau.it/";
+    const DEFAULT_PARAMS = {
+      knowledgeid: "98748408-6c75-4b05-94d2-3a8c4b8c91e9",
+      avatarid: "69cf601f-b35b-4d1b-a701-c854d223b5a5",
+      lang: "it"
+    };
+
+    const frame = document.getElementById("avatarFrame");
+    const btnStart = document.getElementById("btnStart");
+    const btnStop = document.getElementById("btnStop");
+    const uiTitle = document.getElementById("uiTitle");
+    const uiStatus = document.getElementById("uiStatus");
+    const pillLang = document.getElementById("pillLang");
+
+    // Permette override via querystring del wrapper:
+    // es: /?lang=fr oppure /?knowledgeid=...&avatarid=...
+    function buildTargetUrl() {
+      const qs = new URLSearchParams(window.location.search);
+
+      const params = new URLSearchParams();
+      for (const [k, v] of Object.entries(DEFAULT_PARAMS)) {
+        params.set(k, qs.get(k) || v);
+      }
+
+      // Eventuali parametri extra (se un domani ne servono)
+      for (const [k, v] of qs.entries()) {
+        if (!params.has(k)) params.set(k, v);
+      }
+
+      return BASE_URL + "?" + params.toString();
+    }
+
+    function setLoadingUI() {
+      uiTitle.textContent = "Starting avatar...";
+      uiStatus.textContent = "Sto avviando la sessione…";
+      btnStart.classList.add("hidden");
+      btnStop.classList.remove("hidden");
+    }
+
+    function setIdleUI() {
+      uiTitle.textContent = "Start";
+      uiStatus.textContent = "Tocca Start per avviare l’avatar.";
+      btnStart.classList.remove("hidden");
+      btnStop.classList.add("hidden");
+    }
+
+    function start() {
+      const url = buildTargetUrl();
+      const lang = new URL(url).searchParams.get("lang") || "it";
+      pillLang.textContent = "lang=" + lang;
+
+      setLoadingUI();
+      frame.classList.remove("hidden");
+      frame.src = url;
+
+      // Dopo un po' togliamo lo stato "loading" (non possiamo leggere lo stato interno cross-domain)
+      setTimeout(() => {
+        uiTitle.textContent = "Live";
+        uiStatus.textContent = "Se non senti audio o non funziona il mic, controlla i permessi del browser.";
+      }, 2500);
+    }
+
+    function stop() {
+      // Stop “sicuro”: svuota e resetta l’iframe
+      frame.src = "about:blank";
+      frame.classList.add("hidden");
+      setIdleUI();
+    }
+
+    btnStart.addEventListener("click", start);
+    btnStop.addEventListener("click", stop);
+
+    // UX: se vuoi che parta subito (senza click) imposta a true,
+    // ma su iPhone spesso serve interazione utente per mic/audio.
+    const AUTO_START = false;
+    if (AUTO_START) start();
+  </script>
 </body>
 </html>
