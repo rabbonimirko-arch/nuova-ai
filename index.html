@@ -1,213 +1,120 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>AI</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AI Agent</title>
 
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
+    /* Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     html, body {
-      width:100%;
-      height:100%;
-      background:#000;
-      overflow:hidden;
-      font-family: Arial, Helvetica, sans-serif;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
 
-    .wrap{
-      position:fixed;
-      inset:0;
-      width:100vw;
-      height:100vh;
-      height:100dvh;
-      background:#000;
+    /* Safe-area iPhone */
+    body {
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
 
-    iframe{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      border:0;
-      background:#000;
-      display:block;
+    /* Contenitore che forza 9:16 e centra */
+    .stage {
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #000;
     }
 
-    /* TOP BAR */
-    .topbar{
-      position:absolute;
-      top: env(safe-area-inset-top);
-      left:0;
-      right:0;
-      padding:10px 12px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      z-index:50;
-      pointer-events:none;
+    /* Box 9:16 "letterbox" se schermo non coincide */
+    .frame {
+      width: min(100vw, calc(100vh * 9 / 16));
+      height: min(100vh, calc(100vw * 16 / 9));
+      background: #000;
+      border: 0;
+      border-radius: 0;
+      overflow: hidden;
+      position: relative;
     }
 
-    .pill, .btn{
-      pointer-events:auto;
-      background:rgba(0,0,0,0.65);
-      color:#fff;
-      border:1px solid rgba(255,255,255,0.25);
-      border-radius:14px;
-      padding:10px 14px;
-      font-size:13px;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      user-select:none;
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+      display: block;
+      /* evita selezioni strane */
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .btn{
-      cursor:pointer;
+    /* Overlay di "caricamento" (opzionale) */
+    .loading {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: rgba(255,255,255,.85);
+      font-size: 14px;
+      letter-spacing: .2px;
+      user-select: none;
+      pointer-events: none;
+      background: radial-gradient(circle at center, rgba(255,255,255,.06), rgba(0,0,0,.85));
     }
 
-    .btn:active{
-      transform:scale(0.97);
-    }
-
-    .timer{
-      font-variant-numeric: tabular-nums;
-      letter-spacing:0.5px;
-    }
-
-    /* OVERLAY FINE SESSIONE */
-    .overlay{
-      position:fixed;
-      inset:0;
-      width:100vw;
-      height:100vh;
-      height:100dvh;
-      background:rgba(0,0,0,0.92);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      z-index:999;
-      padding:24px;
-    }
-
-    .overlay.active{
-      display:flex;
-    }
-
-    .card{
-      max-width:360px;
-      color:#fff;
-    }
-
-    .card h1{
-      font-size:22px;
-      margin-bottom:12px;
-    }
-
-    .card p{
-      font-size:15px;
-      opacity:0.85;
-      line-height:1.35;
-      margin-bottom:20px;
-    }
-
-    .cta{
-      display:inline-block;
-      padding:12px 20px;
-      border-radius:16px;
-      background:#fff;
-      color:#000;
-      font-size:14px;
-      font-weight:700;
-    }
+    /* Nasconde la scroll-bar su alcuni browser */
+    ::-webkit-scrollbar { width: 0; height: 0; }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
+  <div class="stage">
+    <div class="frame">
+      <div class="loading" id="loading">Caricamento…</div>
 
-    <!-- TOP BAR -->
-    <div class="topbar">
-      <div class="pill">
-        Sessione <strong class="timer" id="timer">05:00</strong>
-      </div>
-      <button class="btn" id="exitBtn" type="button">Esci</button>
+      <iframe
+        id="agentFrame"
+        title="D-ID Agent"
+        allow="camera; microphone; autoplay; clipboard-read; clipboard-write; fullscreen"
+        referrerpolicy="no-referrer"
+        src="https://studio.d-id.com/agents/share?id=v2_agt_Q4CoAomY&utm_source=copy&key=WjI5dloyeGxMVzloZFhSb01ud3hNVGd5TXpZME9EUTNNVFl4T0RBMk5ETTBNams2U2tOSmVteHlOMkZzWW1oRlIxUTNXbXhPTVZSeQ=="
+      ></iframe>
     </div>
-
-    <!-- IFRAME AI -->
-    <iframe
-      id="aiFrame"
-      src="https://lia.gamaleau.it/?knowledgeid=98748408-6c75-4b05-94d2-3a8c4b8c91e9&avatarid=69cf601f-b35b-4d1b-a701-c854d223b5a5&lang=it"
-      allow="microphone; camera; autoplay; fullscreen"
-      allowfullscreen
-      referrerpolicy="no-referrer"
-      title="Avatar AI">
-    </iframe>
-
-    <!-- OVERLAY -->
-    <div class="overlay" id="overlay">
-      <div class="card">
-        <h1>Sessione scaduta</h1>
-        <p>Il tempo a disposizione è terminato.</p>
-        <div class="cta">Tocca per ricaricare</div>
-      </div>
-    </div>
-
   </div>
 
   <script>
-    const SESSION_SECONDS = 5 * 60;
+    // Prova a mandare subito full-screen (funziona se l'utente interagisce: iOS richiede tap)
+    const frame = document.getElementById('agentFrame');
+    const loading = document.getElementById('loading');
 
-    const timerEl = document.getElementById("timer");
-    const exitBtn = document.getElementById("exitBtn");
-    const overlay = document.getElementById("overlay");
-    const frame   = document.getElementById("aiFrame");
-
-    let remaining = SESSION_SECONDS;
-    let interval  = null;
-
-    function format(sec){
-      const m = Math.floor(sec / 60);
-      const s = sec % 60;
-      return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
-    }
-
-    function endSession(){
-      clearInterval(interval);
-      frame.src = "about:blank";
-      overlay.classList.add("active");
-    }
-
-    function reloadPage(){
-      const url = new URL(location.href);
-      url.searchParams.set("_r", Date.now());
-      location.replace(url.toString());
-    }
-
-    interval = setInterval(() => {
-      remaining--;
-      timerEl.textContent = format(Math.max(remaining,0));
-      if (remaining <= 0) endSession();
-    }, 1000);
-
-    exitBtn.addEventListener("click", () => {
-      clearInterval(interval);
-
-      // tentativo chiusura (non garantito su mobile)
-      try {
-        window.open("", "_self");
-        window.close();
-      } catch(e){}
-
-      // fallback certo
-      setTimeout(endSession, 120);
+    frame.addEventListener('load', () => {
+      if (loading) loading.style.display = 'none';
     });
 
-    overlay.addEventListener("click", reloadPage);
+    // Se vuoi, al primo tap prova a entrare in fullscreen (su iOS spesso resta "pseudo-fullscreen")
+    function requestFs() {
+      const el = document.documentElement;
+      const fs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+      if (fs) { try { fs.call(el); } catch(e) {} }
+      window.removeEventListener('touchstart', requestFs);
+      window.removeEventListener('click', requestFs);
+    }
+    window.addEventListener('touchstart', requestFs, { once: true, passive: true });
+    window.addEventListener('click', requestFs, { once: true });
 
-    // blocchi kiosk base
-    document.addEventListener("contextmenu", e => e.preventDefault());
-    document.addEventListener("selectstart", e => e.preventDefault());
+    // Blocca gesture zoom doppio tap (più “kiosk-like”)
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (event) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) event.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
   </script>
 </body>
 </html>
