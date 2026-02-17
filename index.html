@@ -19,40 +19,41 @@
             overflow: hidden;
             background-color: #000000;
             position: fixed;
+            touch-action: none;
             -webkit-overflow-scrolling: none;
             overscroll-behavior: none;
         }
         
-        .container {
+        .stage {
             position: fixed;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100vw;
             height: 100vh;
             height: 100dvh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             background-color: #000000;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
         
         iframe {
-            width: 100vw;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 177.78vh; /* 16:9 width based on height */
             height: 100vh;
             height: 100dvh;
+            min-width: 100vw;
+            min-height: 56.25vw; /* 9/16 = 0.5625 */
+            transform: translate(-50%, -50%);
             border: none;
-            background-color: #000000;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <main class="stage">
         <iframe 
             src="https://embed.liveavatar.com/v1/c05eedfb-19ce-484b-8522-fc49a9de1ab3" 
-            allow="microphone" 
-            title="LiveAvatar Embed">
+            allow="microphone; camera; autoplay" 
+            title="LiveAvatar">
         </iframe>
-    </div>
+    </main>
 </body>
 </html>
