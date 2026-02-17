@@ -33,6 +33,19 @@
             height: 100dvh;
             background: #000000;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000000;
         }
         
         iframe {
@@ -44,10 +57,9 @@
             height: 100dvh;
             min-width: 100vw;
             min-height: 56.25vw;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%) scale(0.92);
             border: none;
             background: #000000;
-            filter: none;
         }
 
         @media (min-aspect-ratio: 16/9) {
@@ -62,11 +74,13 @@
 </head>
 <body>
     <main class="stage">
-        <iframe 
-            src="https://embed.liveavatar.com/v1/c05eedfb-19ce-484b-8522-fc49a9de1ab3?background=000000" 
-            allow="microphone; camera; autoplay; fullscreen" 
-            title="LiveAvatar">
-        </iframe>
+        <div class="iframe-wrapper">
+            <iframe 
+                src="https://embed.liveavatar.com/v1/09919247-f4b2-45d8-a75e-86fc2fceaebf" 
+                allow="microphone; camera; autoplay; fullscreen" 
+                title="LiveAvatar">
+            </iframe>
+        </div>
     </main>
 </body>
 </html>
