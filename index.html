@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>LiveAvatar</title>
     <style>
         * {
@@ -19,7 +20,7 @@
             overflow: hidden;
             background-color: #000000;
             position: fixed;
-            touch-action: none;
+            touch-action: manipulation;
             -webkit-overflow-scrolling: none;
             overscroll-behavior: none;
         }
@@ -31,19 +32,32 @@
             height: 100vh;
             height: 100dvh;
             background-color: #000000;
+            overflow: hidden;
         }
         
         iframe {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 177.78vh; /* 16:9 width based on height */
+            /* Scala l'iframe per coprire tutto lo schermo */
+            width: 177.78vh;
             height: 100vh;
             height: 100dvh;
             min-width: 100vw;
-            min-height: 56.25vw; /* 9/16 = 0.5625 */
+            min-height: 56.25vw;
             transform: translate(-50%, -50%);
             border: none;
+            background-color: #000000;
+        }
+
+        /* Per schermi molto larghi (landscape) */
+        @media (min-aspect-ratio: 16/9) {
+            iframe {
+                width: 100vw;
+                height: 56.25vw;
+                min-width: auto;
+                min-height: auto;
+            }
         }
     </style>
 </head>
@@ -51,7 +65,7 @@
     <main class="stage">
         <iframe 
             src="https://embed.liveavatar.com/v1/c05eedfb-19ce-484b-8522-fc49a9de1ab3" 
-            allow="microphone; camera; autoplay" 
+            allow="microphone; camera; autoplay; fullscreen" 
             title="LiveAvatar">
         </iframe>
     </main>
